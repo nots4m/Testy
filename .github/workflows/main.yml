@@ -42,14 +42,14 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
           
-          # Make sure the .android/avd directory exists
           mkdir -p $HOME/.android/avd
           
-          # Create AVD named "test"
+          # Force avdmanager to store AVD in the correct folder
+          ANDROID_AVD_HOME=$HOME/.android/avd \
           echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --force
           
-          # Verify it exists
-          avdmanager list avd
+          # List AVDs to confirm it exists
+          ANDROID_AVD_HOME=$HOME/.android/avd avdmanager list avd
 
       # 4. Start emulator
       - name: Start emulator
