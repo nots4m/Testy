@@ -1,0 +1,69 @@
+name: Android Emulator Automation
+
+on:
+  workflow_dispatch: # Run manually
+  schedule:
+    - cron: "0 */6 * * *" # Optional: every 6 hours
+
+jobs:
+  android-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # Max job time
+    steps:
+      # 1. Set up JDK
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 2. Install Android SDK command-line tools
+      - name: Install Android SDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager
+          
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+          unzip commandlinetools-linux-10406996_latest.zip -d $HOME/android-sdk/cmdline-tools
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
+          
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "emulator" \
+            "platforms;android-30" \
+            "system-images;android-30;google_apis;x86_64"
+
+      # 3. Create and start Android emulator
+      - name: Start emulator
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
+          
+          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --force
+          $ANDROID_HOME/emulator/emulator -avd test -no-snapshot -no-audio -no-window -gpu swiftshader_indirect -netdelay none -netspeed full &
+          
+          adb wait-for-device
+          adb shell getprop ro.product.model
+          echo "✅ Emulator started"
+
+      # 4. Example automation with ADB
+      - name: Run automation script
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
+          
+          # Wake device
+          adb shell input keyevent 26
+          adb shell input swipe 300 1000 300 500 200
+          
+          # Example: open Chrome and go to a website
+          adb shell am start -a android.intent.action.VIEW -d "https://example.com"
+          sleep 10
+          
+          # Example: tap on screen (x,y coords)
+          adb shell input tap 500 1200
+          
+          echo "✅ Automation done"
