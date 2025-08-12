@@ -8,7 +8,7 @@ on:
 jobs:
   android-emulator:
     runs-on: ubuntu-latest
-    timeout-minutes: 60 # Max job time
+    timeout-minutes: 60
     steps:
       # 1. Set up JDK
       - name: Set up Java
@@ -36,34 +36,44 @@ jobs:
             "platforms;android-30" \
             "system-images;android-30;google_apis;x86_64"
 
-      # 3. Create and start Android emulator
+      # 3. Create AVD before starting emulator
+      - name: Create Android Virtual Device
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
+          
+          # Make sure the .android/avd directory exists
+          mkdir -p $HOME/.android/avd
+          
+          # Create AVD named "test"
+          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --force
+          
+          # Verify it exists
+          avdmanager list avd
+
+      # 4. Start emulator
       - name: Start emulator
         run: |
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
           
-          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --force
           $ANDROID_HOME/emulator/emulator -avd test -no-snapshot -no-audio -no-window -gpu swiftshader_indirect -netdelay none -netspeed full &
           
           adb wait-for-device
           adb shell getprop ro.product.model
           echo "✅ Emulator started"
 
-      # 4. Example automation with ADB
+      # 5. Example automation with ADB
       - name: Run automation script
         run: |
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
           
-          # Wake device
           adb shell input keyevent 26
           adb shell input swipe 300 1000 300 500 200
           
-          # Example: open Chrome and go to a website
           adb shell am start -a android.intent.action.VIEW -d "https://example.com"
           sleep 10
           
-          # Example: tap on screen (x,y coords)
           adb shell input tap 500 1200
-          
           echo "✅ Automation done"
