@@ -41,6 +41,5 @@ jobs:
       # Connect local ADB to Ngrok tunnel
       - name: Forward ADB to Ngrok
         run: |
-          adb kill-server
-          adb connect $(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[] | select(.proto == "tcp") | .public_url' | sed 's/^tcp:\/\///')
           adb devices
+          sleep 999999999999
