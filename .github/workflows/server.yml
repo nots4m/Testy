@@ -24,8 +24,16 @@ jobs:
           disable-animations: false
           script: echo "Emulator started"
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-
-
+      - name: Wait for emulator to be ready
+        run: |
+          adb wait-for-device
+          adb shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done; input keyevent 82'
+          adb devices
+          sleep 10
+      - name: Debug emulator status
+        run: |
+          adb shell getprop
+          adb shell dumpsys package
       # Install Ngrok and expose ADB + Appium ports
       - name: Set up Ngrok
         run: |
