@@ -35,8 +35,8 @@ jobs:
           ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}  # Add your token in GitHub Secrets
           ngrok tcp 5555 &  # ADB port
           ngrok tcp 4723 &  # Appium port
-          sleep 5  # Wait for Ngrok tunnels
-          curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[] | .public_url'  # Print Ngrok URLs
+          sleep 10  # Wait for Ngrok tunnels
+          curl -s http://localhost:4040/api/tunnels # Print Ngrok URLs
 
       # Connect local ADB to Ngrok tunnel
       - name: Forward ADB to Ngrok
